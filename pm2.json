@@ -1,0 +1,19 @@
+{
+  "apps": [{
+    "name": "hiolabs",
+    "script": "production.js",
+    "cwd": "/opt/application/wx-shop/hioshop-server",
+    "exec_mode": "fork",
+    "watch": true,
+    "max_memory_restart": "1G",
+    "autorestart": true,
+    "log_date_format"  : "YYYY-MM-DD HH:mm Z",
+    "log_file"   : "/opt/data/logs/hioshop/log",
+    "error_file" : "/opt/data/logs/hioshop/err.log",
+    "node_args": [],
+    "args": [],
+    "env": {
+      
+    }
+  }]
+}
