@@ -2,7 +2,7 @@
   "apps": [{
     "name": "hiolabs",
     "script": "production.js",
-    "cwd": "/opt/application/wx-shop/hioshop-server",
+    "cwd": "/opt/application/wx-shop/",
     "exec_mode": "fork",
     "watch": true,
     "max_memory_restart": "1G",
