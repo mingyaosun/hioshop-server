@@ -3,7 +3,8 @@
   "description": "hioshop - open source mini program shop",
   "version": "1.0.0",
   "scripts": {
-    "start": "node development.js",
+    "dev": "node development.js",
+    "pro": "node development.js",
     "pkg-build": "pkg ./ --out-path=dist",
     "compile": "babel --no-babelrc src/ --presets think-node --out-dir app/",
     "lint": "eslint src/",
@@ -21,6 +22,7 @@
     "nanoid": "^2.1.1",
     "node-wget": "^0.4.3",
     "pinyin": "^2.9.0",
+    "pkg": "^4.4.9",
     "qiniu": "^7.2.1",
     "querystring": "^0.2.0",
     "request": "^2.81.0",
@@ -53,12 +55,11 @@
     "node": ">=6.0.0"
   },
   "readmeFilename": "README.md",
-  "bin": "development.js",
+  "bin": "production.js",
   "pkg": {
     "assets": [
       "src/**/*",
-      "view/**/*",
-      "node_modules/**"
+      "view/**/*"
     ],
     "targets": [
       "node12-linux-x64",
