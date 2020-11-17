@@ -13,11 +13,28 @@ module.exports = class extends think.Service {
         //     saveKey: key
         // };
         // let putPolicy = new qiniu.rs.PutPolicy(options);
+        // let uploadToken = putPolicy.uploadToken(mac);
         let uploadToken = think.config('qiniu.token');
         let data = {
             uploadToken: uploadToken,
             domain: domain,
         };
         return data;
+    }
+
+    async deleteimg(key) {
+        const options = {
+            method: 'POST',
+            url: think.config('qiniu.domain')+'delete.php',
+            form: {
+                token: think.config('qiniu.token'),
+                key: key,
+            }
+        };
+        let sessionData = await rp(options);
+        sessionData = JSON.parse(sessionData);
+        let result = sessionData.result;
+        console.log(result);
+        return result;
     }
 };

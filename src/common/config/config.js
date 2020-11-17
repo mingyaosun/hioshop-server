@@ -25,7 +25,7 @@ module.exports = {
     },
     qiniu: {
         token: 'token123456',                // 请填自己的token,和服务器index.php中的该值保持一致
-        domain: 'http://xxx.xxx.xxx/'   // 请填自己的图片存放站点,也是index.php的根目录,直接访问会显示测试通过，末尾的/不能省略
+        domain: 'https://www.sunmingyao.com/'   // 请填自己的图片存放站点,也是index.php的根目录,直接访问会显示测试通过，末尾的/不能省略
     },
     // 在七牛新建一个https的空间，这个是用来存储分享图片的https图片，对应的是goods表中的https_pic_url
     //着重强调，https是用来存储分享图片的，即点击分享按钮后无图片说明是这里配置的问题
@@ -60,8 +60,8 @@ module.exports = {
         //是否开启邮件提醒，如果是，请确保以下配置正确，开启后，用户下单会收到邮件提醒；如果配置有误，会在server命令行看到报错信息；
     email: {
         service: 'QQ',//支持的邮箱列表:'1und1','AOL','DebugMail.io','DynectEmail','FastMail','GandiMail','Gmail','Godaddy','GodaddyAsia','GodaddyEurope','hot.ee','Hotmail','iCloud','mail.ee','Mail.ru','Mailgun','Mailjet','Mandrill','Naver','OpenMailBox','Postmark','QQ','QQex','SendCloud','SendGrid','SES','SES-US-EAST-1','SES-US-WEST-1','SES-EU-WEST-1','Sparkpost','Yahoo','Yandex','Zoho'
-        user: '1234567890@qq.com',//邮箱用户名
+        user: '1183244088@qq.com',//邮箱用户名
         pass: 'abcdefghijklmn',//邮箱授权码，以qq为例，要开启POP3/SMTP服务，获得授权码，自行百度
-        recipient: '987654321@qq.com'//收件人邮箱地址，多个收件人以英文逗号隔开
+        recipient: '1183244088@qq.com'//收件人邮箱地址，多个收件人以英文逗号隔开
     }
 };
