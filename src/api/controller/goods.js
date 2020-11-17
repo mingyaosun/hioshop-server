@@ -33,11 +33,28 @@ module.exports = class extends Base {
             }
         }
         let specificationList = await model.getSpecificationList(goodsId);
+        let commentList = await this.model('comment').where({
+            goods_id: goodsId,
+            is_delete:0
+        }).select();
+        for(const item of commentList){
+            item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
+        }
+        if(commentList.length>0){
+            for(const item of commentList){
+            item.list=await this.model('goods_comment_img').where({
+            cid: item.id,
+            is_delete:0
+        }).select();
+        }
+        }
+
         info.goods_number = goodsNumber;
         return this.success({
             info: info,
             gallery: gallery,
             specificationList: specificationList,
+            commentList: commentList,
             productList: productList
         });
     }

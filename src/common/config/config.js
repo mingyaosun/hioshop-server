@@ -11,7 +11,7 @@ module.exports = {
     express: {
         // 已废弃，之后考虑改回来，做成和阿里云的物流查询可以切换，方便大家的使用
         // 免费的，但是顺丰的话，要配合快递鸟的电子面单
-        // 快递物流信息查询使用的是快递鸟接口，申请地址：http://www.kdniao.com/ 
+        // 快递物流信息查询使用的是快递鸟接口，申请地址：http://www.kdniao.com/
         appid: '12312312', // 对应快递鸟用户后台 用户ID
         appkey: '123123123123123123123123', // 对应快递鸟用户后台 API key
         request_url: 'http://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx'
@@ -27,7 +27,7 @@ module.exports = {
         access_key: 'asdlakjsdlajlajsdlas',      // 在七牛密钥管理中获取
         secret_key: 'alskdjalksjdlasjdlajsd',    // 在七牛密钥管理中获取
         bucket: 'bucketname',                    // 请填自己的bucket的名称
-        domain: 'domain/'                         // 请填自己的domain域名
+        domain: 'http://www.sunmingyao.com:8099/'// 请填自己的domain域名
     },
     // 在七牛新建一个https的空间，这个是用来存储分享图片的https图片，对应的是goods表中的https_pic_url
     qiniuHttps: {
