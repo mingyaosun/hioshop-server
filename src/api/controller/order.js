@@ -8,6 +8,23 @@ module.exports = class extends Base {
      * 获取订单列表
      * @return {Promise} []
      */
+    sendMail(subject, html) {
+        var nodemailer = require('nodemailer');
+        var smtpTransport = require('nodemailer-smtp-transport');
+        smtpTransport = nodemailer.createTransport(smtpTransport({
+            service: think.config('email.service'),
+            auth: {
+                user: think.config('email.user'),
+                pass: think.config('email.pass')
+            }
+        }));
+        smtpTransport.sendMail({ from: think.config('email.user'), to: think.config('email.recipient'), subject: subject, html: html }, function(error, response) {
+            if (error) {
+                console.log('mail_fail:' + error);
+            }
+            console.log('mail_success');
+        });
+    }
     async listAction() {
         const showType = this.get('showType');
         const page = this.get('page');
@@ -185,7 +202,7 @@ module.exports = class extends Base {
         } else {
             const cartList = await this.model('cart').where({
                 user_id: think.userId,
-                checked:1,
+                checked: 1,
                 is_delete: 0,
                 is_fast: 0,
             }).select();
@@ -314,21 +331,21 @@ module.exports = class extends Base {
         }
         let checkPrice = 0;
         let checkStock = 0;
-        for(const item of checkedGoodsList){
+        for (const item of checkedGoodsList) {
             let product = await this.model('product').where({
-                id:item.product_id
+                id: item.product_id
             }).find();
-            if(item.number > product.goods_number){
+            if (item.number > product.goods_number) {
                 checkStock++;
             }
-            if(item.retail_price != item.add_price){
+            if (item.retail_price != item.add_price) {
                 checkPrice++;
             }
         }
-        if(checkStock > 0){
+        if (checkStock > 0) {
             return this.fail(400, '库存不足，请重新下单');
         }
-        if(checkPrice > 0){
+        if (checkPrice > 0) {
             return this.fail(400, '价格发生变化，请重新下单');
         }
         // 获取订单使用的红包
@@ -377,7 +394,7 @@ module.exports = class extends Base {
             actual_price: actualPrice,
             change_price: actualPrice,
             print_info: print_info,
-            offline_pay:offlinePay
+            offline_pay: offlinePay
         };
         // 开启事务，插入订单信息和订单商品
         const orderId = await this.model('order').add(orderInfo);
@@ -387,6 +404,7 @@ module.exports = class extends Base {
         }
         // 将商品信息录入数据库
         const orderGoodsData = [];
+        let orderGoodsinfo1 = '';
         for (const goodsItem of checkedGoodsList) {
             orderGoodsData.push({
                 user_id: think.userId,
@@ -401,12 +419,19 @@ module.exports = class extends Base {
                 goods_specifition_name_value: goodsItem.goods_specifition_name_value,
                 goods_specifition_ids: goodsItem.goods_specifition_ids
             });
+            orderGoodsinfo1 = orderGoodsinfo1 + '|' + goodsItem.goods_name + '|';
         }
         await this.model('order_goods').addMany(orderGoodsData);
         await this.model('cart').clearBuyGoods();
+        if (think.config('isemail')) {
+            const emailSerivce = this.service('email', 'api');
+            let senthtml = '客户ID：' + orderInfo.user_id + '<br>客户姓名：' + orderInfo.consignee + '<br>商品列表：' + orderGoodsinfo1 + '<br>订单金额：' + orderInfo.change_price;
+            emailSerivce.sendMail('新订单', senthtml);
+        }
         return this.success({
             orderInfo: orderInfo
         });
+
     }
     async updateAction() {
         const addressId = this.post('addressId');
@@ -467,10 +492,10 @@ module.exports = class extends Base {
             let expressNo = expressInfo.logistic_code;
             let code = shipperCode.substring(0, 2);
             let shipperName = '';
-			let sfLastNo = think.config('aliexpress.sfLastNo');
+            let sfLastNo = think.config('aliexpress.sfLastNo');
             if (code == "SF") {
                 shipperName = "SFEXPRESS";
-                expressNo = expressNo + ':'+ sfLastNo;
+                expressNo = expressNo + ':' + sfLastNo;
             } else {
                 shipperName = shipperCode;
             }
@@ -499,7 +524,7 @@ module.exports = class extends Base {
         // return this.success(latestExpressInfo);
     }
     async getExpressInfo(shipperName, expressNo) {
-		let appCode = "APPCODE "+ think.config('aliexpress.appcode');
+        let appCode = "APPCODE " + think.config('aliexpress.appcode');
         const options = {
             method: 'GET',
             url: 'http://wuliu.market.alicloudapi.com/kdi?no=' + expressNo + '&type=' + shipperName,

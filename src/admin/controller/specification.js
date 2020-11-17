@@ -1,5 +1,4 @@
 const Base = require('./base.js');
-const moment = require('moment');
 module.exports = class extends Base {
     /**
      * index action
@@ -38,32 +37,9 @@ module.exports = class extends Base {
         };
         return this.success(dataInfo);
     }
-    async getGoodscommentAction() {
-        const id = this.post('id');
-        const model = this.model('comment');
-        const model2 = this.model('goods_comment_img');
-        const data = await model.where({
-            goods_id: id,
-            is_delete: 0
-        }).select();
-        //TODO 这里只有一层，以后如果有多重型号，如一件商品既有颜色又有尺寸时，这里的代码是不对的。以后再写。
-        for (const item of data) {
-            item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
-            item.list=await model2.where({
-            is_delete: 0,
-            cid:item.id
-        }).field('id,url').select();
-        }
-        console.log(data);
-        let dataInfo = {
-            commentData: data,
-        };
-        return this.success(dataInfo);
-    }
     async productUpdateAction() {
         const goods_number = this.post('goods_number');
         const goods_weight = this.post('goods_weight');
-        const goods_yl = this.post('goods_yl');
         const goods_sn = this.post('goods_sn');
         const retail_price = this.post('retail_price');
         const cost = this.post('cost');
@@ -71,7 +47,6 @@ module.exports = class extends Base {
         let updateInfo = {
             goods_number: goods_number,
             goods_weight: goods_weight,
-            goods_yl: goods_yl,
             cost: cost,
             retail_price: retail_price
         }

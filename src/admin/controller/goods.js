@@ -492,7 +492,6 @@ module.exports = class extends Base {
     async storeAction() {
         const values = this.post('info');
         const specData = this.post('specData');
-        const commentData = this.post('commentData');
         const specValue = this.post('specValue');
         const cateId = this.post('cateId');
         const model = this.model('goods');
@@ -524,23 +523,6 @@ module.exports = class extends Base {
             }).update({
                 is_delete: 1
             });
-            await this.model('comment').where({
-                goods_id: id
-            }).update({
-                is_delete: 1
-            });
-
-            for (const item of commentData) {
-                item.time = parseInt(new Date(item.time).getTime() / 1000);
-                if (item.id > 0) {
-                    await this.model('comment').where({
-                        id: item.id
-                    }).update(item);
-                }else{
-                    item.goods_id=id;
-                    await this.model('comment').add(item);
-                }
-            }
             for (const item of specData) {
                 if (item.id > 0) {
                     await this.model('cart').where({
@@ -591,10 +573,6 @@ module.exports = class extends Base {
                 item.is_on_sale = 1;
                 await this.model('product').add(item);
             }
-            for (const item of commentData) {
-                item.time = parseInt(new Date(item.time).getTime() / 1000);
-                await this.model('comment').add(item);
-            }
         }
         let pro = await this.model('product').where({
             goods_id: goods_id,
@@ -612,6 +590,7 @@ module.exports = class extends Base {
                 is_on_sale: 1,
                 is_delete: 0
             }).getField('retail_price');
+            debugger
             let maxPrice = Math.max(...retail_price);
             let minPrice = Math.min(...retail_price);
             let cost = await this.model('product').where({
@@ -798,19 +777,6 @@ module.exports = class extends Base {
         await this.model('goods_gallery').add(info);
         return this.success();
     }
-    async comimgAction() {
-        const url = this.post('url');
-        const id = this.post('goods_id');
-        const cid = this.post('id');
-        console.log(cid);
-        let info = {
-            goods_id: id,
-            url: url,
-            cid:cid
-        }
-        await this.model('goods_comment_img').add(info);
-        return this.success();
-    }
     async getGalleryListAction() {
         const goodsId = this.post('goodsId');
         const data = await this.model('goods_gallery').where({
@@ -830,59 +796,10 @@ module.exports = class extends Base {
         }
         return this.success(info);
     }
-    async getcomimgListAction() {
-        const goodsId = this.post('goodsId');
-        const id = this.post('id');
-        if(id==0){
-        const data = await this.model('goods_comment_img').where({
-            goods_id: goodsId,
-            is_delete:0,
-        }).select();
-        let galleryData = [];
-        for (const item of data) {
-            let pdata = {
-                id: item.id,
-                url: item.img_url,
-                cid:item.cid
-            }
-            galleryData.push(pdata);
-        }
-        let info = {
-            galleryData: galleryData,
-        }
-        return this.success(info);
-        }
-        const data = await this.model('goods_comment_img').where({
-            goods_id: goodsId,
-            is_delete:0,
-            cid:id
-        }).select();
-        let galleryData = [];
-        for (const item of data) {
-            let pdata = {
-                id: item.id,
-                url: item.img_url
-            }
-            galleryData.push(pdata);
-        }
-        let info = {
-            galleryData: galleryData,
-        }
-        return this.success(info);
-    }
     async deleteGalleryFileAction() {
         const url = this.post('url');
         const id = this.post('id');
         await this.model('goods_gallery').where({
-            id: id
-        }).limit(1).update({
-            is_delete: 1
-        });
-        return this.success('文件删除成功');
-    }
-    async deletecomimgFileAction() {
-        const id = this.post('id');
-        await this.model('goods_comment_img').where({
             id: id
         }).limit(1).update({
             is_delete: 1

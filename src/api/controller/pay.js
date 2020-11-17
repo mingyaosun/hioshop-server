@@ -8,6 +8,7 @@ module.exports = class extends Base {
      * @returns {Promise<PreventPromise|void|Promise>}
      */
     // 测试时付款，将真实接口注释。 在小程序的services/pay.js中按照提示注释和打开
+
     async preWeixinPayaAction() {
         const orderId = this.get('orderId');
         const orderInfo = await this.model('order').where({
@@ -15,13 +16,13 @@ module.exports = class extends Base {
         }).find();
         let userId = orderInfo.user_id;
         let result = {
-        	transaction_id: 123123123123,
-        	time_end: parseInt(new Date().getTime() / 1000),
+            transaction_id: 123123123123,
+            time_end: parseInt(new Date().getTime() / 1000),
         }
         const orderModel = this.model('order');
         await orderModel.updatePayData(orderInfo.id, result);
         this.afterPay(orderInfo);
-		return this.success();
+        return this.success();
     }
     // 真实的付款接口
     async preWeixinPayAction() {
@@ -31,26 +32,26 @@ module.exports = class extends Base {
         }).find();
         // 再次确认库存和价格
         let orderGoods = await this.model('order_goods').where({
-            order_id:orderId,
-            is_delete:0
+            order_id: orderId,
+            is_delete: 0
         }).select();
         let checkPrice = 0;
         let checkStock = 0;
-        for(const item of orderGoods){
+        for (const item of orderGoods) {
             let product = await this.model('product').where({
-                id:item.product_id
+                id: item.product_id
             }).find();
-            if(item.number > product.goods_number){
+            if (item.number > product.goods_number) {
                 checkStock++;
             }
-            if(item.retail_price != product.retail_price){
+            if (item.retail_price != product.retail_price) {
                 checkPrice++;
             }
         }
-        if(checkStock > 0){
+        if (checkStock > 0) {
             return this.fail(400, '库存不足，请重新下单');
         }
-        if(checkPrice > 0){
+        if (checkPrice > 0) {
             return this.fail(400, '价格发生变化，请重新下单');
         }
         if (think.isEmpty(orderInfo)) {
@@ -83,7 +84,7 @@ module.exports = class extends Base {
         const WeixinSerivce = this.service('weixin', 'api');
         const data = this.post('xml');
         const result = WeixinSerivce.payNotify(this.post('xml'));
-        
+
         if (!result) {
             let echo = 'FAIL';
             return this.json(echo);
@@ -99,11 +100,16 @@ module.exports = class extends Base {
             if (orderInfo.order_type == 0) { //普通订单和秒杀订单
                 await orderModel.updatePayData(orderInfo.id, result);
                 this.afterPay(orderInfo);
-            } 
+            }
         } else {
             return '<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[订单已支付]]></return_msg></xml>';
         }
-        let echo = 'SUCCESS'
+        let echo = 'SUCCESS';
+        if (think.config('isemail')) {
+            const emailSerivce = this.service('email', 'api');
+            let senthtml = '客户ID：' + orderInfo.user_id + '<br>客户姓名：' + orderInfo.consignee + '<br>订单ID：' + orderInfo.id + '<br>实付金额：' + orderInfo.change_price;
+            emailSerivce.sendMail('订单已支付', senthtml);
+        }
         return this.json(echo);
     }
     async afterPay(orderInfo) {
