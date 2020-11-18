@@ -828,12 +828,14 @@ module.exports = class extends Base {
     }
     async deleteListPicUrlAction() {
         const id = this.post('id');
+        const key = this.post('key');//图片名称
         console.log(id);
         await this.model('goods').where({
             id: id
         }).limit(1).update({
-            list_pic_url: 0
+            list_pic_url: ''
         });
+        await this.service('token').deleteimg(key);
         return this.success();
     }
     async destoryAction() {

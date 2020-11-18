@@ -21,20 +21,4 @@ module.exports = class extends think.Service {
         };
         return data;
     }
-
-    async deleteimg(key) {
-        const options = {
-            method: 'POST',
-            url: think.config('qiniu.domain')+'delete.php',
-            form: {
-                token: think.config('qiniu.token'),
-                key: key,
-            }
-        };
-        let sessionData = await rp(options);
-        sessionData = JSON.parse(sessionData);
-        let result = sessionData.result;
-        console.log(result);
-        return result;
-    }
 };

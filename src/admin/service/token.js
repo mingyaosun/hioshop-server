@@ -78,4 +78,22 @@ module.exports = class extends think.Service {
         let token = sessionData.access_token;
         return token;
     }
+
+    async deleteimg(key) {
+        const domain = think.config('qiniu.domain');
+        const fileName = key.replace(domain,'');
+        const options = {
+            method: 'POST',
+            url: domain+'delete.php',
+            form: {
+                token: think.config('qiniu.token'),
+                key: fileName,
+            }
+        };
+        let sessionData = await rp(options);
+        sessionData = JSON.parse(sessionData);
+        let result = sessionData.result;
+        console.log(result);
+        return result;
+    }
 };
