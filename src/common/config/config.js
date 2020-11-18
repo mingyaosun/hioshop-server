@@ -24,7 +24,7 @@ module.exports = {
         ip_server_url:'http://www.kdniao.com/External/GetIp.aspx'
     },
     qiniu: {
-        token: 'token123456',                // 请填自己的token,和服务器index.php中的该值保持一致
+        token: 'MIIBUwIBADANBgkqhkiG9w0BAQEFAASCAT',                // 请填自己的token,和服务器index.php中的该值保持一致
         domain: 'https://www.sunmingyao.com/'   // 请填自己的图片存放站点,也是index.php的根目录,直接访问会显示测试通过，末尾的/不能省略
     },
     // 在七牛新建一个https的空间，这个是用来存储分享图片的https图片，对应的是goods表中的https_pic_url
