@@ -49,6 +49,7 @@ module.exports = class extends Base {
         }
         return this.success(data);
     }
+
     async getExpressDataAction() {
         let kd = [];
         let cate = [];
@@ -76,6 +77,7 @@ module.exports = class extends Base {
         };
         return this.success(infoData);
     }
+
     async copygoodsAction() {
         const goodsId = this.post('id');
         let data = await this.model('goods').where({
@@ -86,7 +88,7 @@ module.exports = class extends Base {
         let insertId = await this.model('goods').add(data);
         let goodsGallery = await this.model('goods_gallery').where({
             goods_id: goodsId,
-            is_delete:0,
+            is_delete: 0,
         }).select();
         for (const item of goodsGallery) {
             let gallery = {
@@ -98,6 +100,7 @@ module.exports = class extends Base {
         }
         return this.success(insertId);
     }
+
     async updateStock(goods_sn, goods_number) {
         console.log('存在，现在就更新');
         await this.model('product').where({
@@ -106,6 +109,7 @@ module.exports = class extends Base {
             goods_number: goods_number
         });
     }
+
     async updateGoodsNumberAction() {
         let all_goods = await this.model('goods').where({
             is_delete: 0,
@@ -124,6 +128,7 @@ module.exports = class extends Base {
         }
         return this.success();
     }
+
     async onsaleAction() {
         const page = this.get('page') || 1;
         const size = this.get('size');
@@ -167,6 +172,7 @@ module.exports = class extends Base {
         }
         return this.success(data);
     }
+
     async outAction() {
         const page = this.get('page') || 1;
         const size = this.get('size');
@@ -206,6 +212,7 @@ module.exports = class extends Base {
         }
         return this.success(data);
     }
+
     async dropAction() {
         const page = this.get('page') || 1;
         const size = this.get('size');
@@ -245,6 +252,7 @@ module.exports = class extends Base {
         }
         return this.success(data);
     }
+
     async sortAction() {
         const page = this.get('page') || 1;
         const size = this.get('size');
@@ -354,6 +362,7 @@ module.exports = class extends Base {
             return this.success(data);
         }
     }
+
     async saleStatusAction() {
         const id = this.get('id');
         const status = this.get('status');
@@ -374,6 +383,7 @@ module.exports = class extends Base {
             checked: sale
         });
     }
+
     async productStatusAction() {
         const id = this.get('id');
         const status = this.get('status');
@@ -383,14 +393,15 @@ module.exports = class extends Base {
         }).update({
             is_on_sale: status
         });
-		// 4.14更新
-		await this.model('cart').where({
-			product_id: id,
-			is_delete: 0
-		}).update({
-			is_on_sale: status
-		})
+        // 4.14更新
+        await this.model('cart').where({
+            product_id: id,
+            is_delete: 0
+        }).update({
+            is_on_sale: status
+        })
     }
+
     async indexShowStatusAction() {
         const id = this.get('id');
         const status = this.get('status');
@@ -405,6 +416,7 @@ module.exports = class extends Base {
             is_index: stat
         });
     }
+
     async infoAction() {
         const id = this.get('id');
         const model = this.model('goods');
@@ -418,6 +430,7 @@ module.exports = class extends Base {
         };
         return this.success(infoData);
     }
+
     async getAllSpecificationAction() {
         const specInfo = await this.model('specification').where({
             id: ['>', 0]
@@ -432,6 +445,7 @@ module.exports = class extends Base {
         }
         return this.success(specOptionsData);
     }
+
     async getAllCategory1Action() { // 我写的算法
         const model = this.model('category');
         const data = await model.where({
@@ -461,6 +475,7 @@ module.exports = class extends Base {
         }
         return this.success(newData);
     }
+
     async getAllCategoryAction() { // 晓玲的算法，她要
         const model = this.model('category');
         const data = await model.where({
@@ -489,6 +504,7 @@ module.exports = class extends Base {
         }
         return this.success(newData);
     }
+
     async storeAction() {
         const values = this.post('info');
         const specData = this.post('specData');
@@ -601,10 +617,9 @@ module.exports = class extends Base {
             let maxCost = Math.max(...cost);
             let minCost = Math.min(...cost);
             let goodsPrice = '';
-            if(minPrice == maxPrice){
+            if (minPrice == maxPrice) {
                 goodsPrice = minPrice;
-            }
-            else{
+            } else {
                 goodsPrice = minPrice + '~' + maxPrice;
             }
             let costPrice = minCost + '~' + maxCost;
@@ -631,6 +646,7 @@ module.exports = class extends Base {
         }
         return this.success(values);
     }
+
     async updatePriceAction() {
         let data = this.post('');
         // console.log(data);
@@ -678,10 +694,9 @@ module.exports = class extends Base {
             let maxCost = Math.max(...cost);
             let minCost = Math.min(...cost);
             let goodsPrice = '';
-            if(minPrice == maxPrice){
+            if (minPrice == maxPrice) {
                 goodsPrice = minPrice;
-            }
-            else{
+            } else {
                 goodsPrice = minPrice + '~' + maxPrice;
             }
             let costPrice = minCost + '~' + maxCost;
@@ -708,6 +723,7 @@ module.exports = class extends Base {
         }
         return this.success();
     }
+
     async checkSkuAction() {
         const info = this.post('info');
         if (info.id > 0) {
@@ -735,6 +751,7 @@ module.exports = class extends Base {
             }
         }
     }
+
     async updateSortAction() {
         const id = this.post('id');
         const sort = this.post('sort');
@@ -746,6 +763,7 @@ module.exports = class extends Base {
         });
         return this.success(data);
     }
+
     async updateShortNameAction() {
         const id = this.post('id');
         const short_name = this.post('short_name');
@@ -757,16 +775,18 @@ module.exports = class extends Base {
         });
         return this.success(data);
     }
+
     async galleryListAction() {
         const id = this.get('id');
         const model = this.model('goods_gallery');
         const data = await model.where({
             goods_id: id,
-            is_delete:0
-        }).select();
+            is_delete: 0
+        }).order('sort_order ASC').select();
         // console.log(data);
         return this.success(data);
     }
+
     async galleryAction() {
         const url = this.post('url');
         const id = this.post('goods_id');
@@ -777,12 +797,13 @@ module.exports = class extends Base {
         await this.model('goods_gallery').add(info);
         return this.success();
     }
+
     async getGalleryListAction() {
         const goodsId = this.post('goodsId');
         const data = await this.model('goods_gallery').where({
             goods_id: goodsId,
-            is_delete:0
-        }).select();
+            is_delete: 0
+        }).order('sort_order asc').select();
         let galleryData = [];
         for (const item of data) {
             let pdata = {
@@ -796,6 +817,7 @@ module.exports = class extends Base {
         }
         return this.success(info);
     }
+
     async deleteGalleryFileAction() {
         const url = this.post('url');
         const id = this.post('id');
@@ -804,8 +826,10 @@ module.exports = class extends Base {
         }).limit(1).update({
             is_delete: 1
         });
+        await this.service('token').deleteimg(url);
         return this.success('文件删除成功');
     }
+
     async galleryEditAction() {
         if (!this.isPost) {
             return false;
@@ -826,6 +850,7 @@ module.exports = class extends Base {
         }
         return this.success();
     }
+
     async deleteListPicUrlAction() {
         const id = this.post('id');
         const key = this.post('key');//图片名称
@@ -838,8 +863,12 @@ module.exports = class extends Base {
         await this.service('token').deleteimg(key);
         return this.success();
     }
+
     async destoryAction() {
+        debugger
         const id = this.post('id');
+        let goods_temp = await this.model('goods').where({id: id}).find();
+        let goods_gallery_temp = await this.model('goods_gallery').where({goods_id: id}).select();
         await this.model('goods').where({
             id: id
         }).limit(1).update({
@@ -855,9 +884,27 @@ module.exports = class extends Base {
         }).update({
             is_delete: 1
         });
+        await this.model('goods_gallery').where({
+            goods_id: id
+        }).update({
+            is_delete: 1
+        });
         // TODO 删除图片
-        return this.success();
+        //删除goods表图片
+        if (goods_temp.list_pic_url) {
+            await this.service('token').deleteimg(goods_temp.list_pic_url);
+        }
+        //删除商品轮播图表图片
+        if (goods_gallery_temp.length > 0){
+            for (var index in goods_gallery_temp){
+                if (goods_gallery_temp[index].img_url){
+                    await this.service('token').deleteimg(goods_gallery_temp[index].img_url);
+                }
+            }
+        }
+            return this.success();
     }
+
     async uploadHttpsImageAction() {
         let url = this.post('url');
         console.log('----------------------');
@@ -868,30 +915,25 @@ module.exports = class extends Base {
         var mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
         var config = new qiniu.conf.Config();
         let zoneNum = think.config('qiniuHttps.zoneNum');
-        if(zoneNum == 0){
+        if (zoneNum == 0) {
             config.zone = qiniu.zone.Zone_z0;
-        }
-        else if(zoneNum == 1){
+        } else if (zoneNum == 1) {
             config.zone = qiniu.zone.Zone_z1;
-        }
-        else if(zoneNum == 2){
+        } else if (zoneNum == 2) {
             config.zone = qiniu.zone.Zone_z2;
-        }
-        else if(zoneNum == 3){
+        } else if (zoneNum == 3) {
             config.zone = qiniu.zone.Zone_na0;
-        }
-
-        else if(zoneNum == 4){
+        } else if (zoneNum == 4) {
             config.zone = qiniu.zone.Zone_as0;
         }
         var bucketManager = new qiniu.rs.BucketManager(mac, config);
         let bucket = think.config('qiniuHttps.bucket');
         let key = think.uuid(32);
         await think.timeout(500);
-        const uploadQiniu = async() => {
+        const uploadQiniu = async () => {
             return new Promise((resolve, reject) => {
                 try {
-                    bucketManager.fetch(url, bucket, key, function(err, respBody, respInfo) {
+                    bucketManager.fetch(url, bucket, key, function (err, respBody, respInfo) {
                         if (err) {
                             console.log(err);
                             //throw err;

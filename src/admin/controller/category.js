@@ -92,10 +92,25 @@ module.exports = class extends Base {
         if (data.length > 0) {
             return this.fail();
         } else {
+            // TODO 删除图片
+            //删图片操作start
+            let data_temp = await this.model('category').where({ id: id }).find();
+            if (data_temp.img_url) { //分类图片
+                let key = data_temp.img_url;
+                // let index = key.lastIndexOf("\/");
+                // key = key.substring(index + 1, key.length);
+                await this.service('token').deleteimg(key);
+            }
+            if (data_temp.icon_url) { //分类图标
+                let key = data_temp.icon_url;
+                // let index = key.lastIndexOf("\/");
+                // key = key.substring(index + 1, key.length);
+                await this.service('token').deleteimg(key);
+            }
+            //删图片操作end
             await this.model('category').where({
                 id: id
             }).limit(1).delete();
-            // TODO 删除图片
             return this.success();
         }
     }
@@ -143,20 +158,24 @@ module.exports = class extends Base {
     }
     async deleteBannerImageAction() {
         let id = this.post('id');
+        let key = this.post('key');
         await this.model('category').where({
             id: id
         }).update({
             img_url: ''
         });
+        await this.service('token').deleteimg(key);
         return this.success();
     }
     async deleteIconImageAction() {
         let id = this.post('id');
+        let key = this.post('key');
         await this.model('category').where({
             id: id
         }).update({
             icon_url: ''
         });
+        await this.service('token').deleteimg(key);
         return this.success();
     }
 };
