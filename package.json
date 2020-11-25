@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "node development.js",
-    "pro": "node development.js",
+    "pro": "node production.js",
     "pkg-build": "pkg ./ --out-path=dist",
     "compile": "babel --no-babelrc src/ --presets think-node --out-dir app/",
     "lint": "eslint src/",

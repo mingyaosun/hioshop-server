@@ -6,6 +6,7 @@ module.exports = class extends Base {
         const goodsList = await model.select();
         return this.success(goodsList);
     }
+
     /**
      * 商品详情页数据
      * @returns {Promise.<Promise|PreventPromise|void>}
@@ -15,11 +16,11 @@ module.exports = class extends Base {
         const model = this.model('goods');
         let info = await model.where({
             id: goodsId,
-			is_delete:0
+            is_delete: 0
         }).find();
-		if(think.isEmpty(info)){
-			return this.fail('该商品不存在或已下架');
-		}
+        if (think.isEmpty(info)) {
+            return this.fail('该商品不存在或已下架');
+        }
         const gallery = await this.model('goods_gallery').where({
             goods_id: goodsId,
             is_delete: 0,
@@ -33,30 +34,31 @@ module.exports = class extends Base {
             }
         }
         let specificationList = await model.getSpecificationList(goodsId);
-let commentList = await this.model('comment').where({
+        let commentList = await this.model('comment').where({
             goods_id: goodsId,
-            is_delete:0
+            is_delete: 0
         }).select();
-        for(const item of commentList){
+        for (const item of commentList) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
         }
-        if(commentList.length>0){
-            for(const item of commentList){
-            item.list=await this.model('goods_comment_img').where({
-            cid: item.id,
-            is_delete:0
-        }).select();
-        }
+        if (commentList.length > 0) {
+            for (const item of commentList) {
+                item.list = await this.model('goods_comment_img').where({
+                    cid: item.id,
+                    is_delete: 0
+                }).select();
+            }
         }
         info.goods_number = goodsNumber;
         return this.success({
             info: info,
             gallery: gallery,
             specificationList: specificationList,
-commentList: commentList,
+            commentList: commentList,
             productList: productList
         });
     }
+
     async goodsShareAction() {
         const goodsId = this.get('id');
         const info = await this.model('goods').where({
@@ -64,6 +66,7 @@ commentList: commentList,
         }).field('name,retail_price').find();
         return this.success(info);
     }
+
     /**
      * 获取商品列表
      * @returns {Promise.<*>}
@@ -109,6 +112,7 @@ commentList: commentList,
         const goodsData = await model.where(whereMap).order(orderMap).select();
         return this.success(goodsData);
     }
+
     /**
      * 在售的商品总数
      * @returns {Promise.<Promise|PreventPromise|void>}
