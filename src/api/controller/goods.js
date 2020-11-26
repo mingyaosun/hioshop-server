@@ -34,15 +34,18 @@ module.exports = class extends Base {
             }
         }
         let specificationList = await model.getSpecificationList(goodsId);
+        //评论查分页
+        const page = this.get('page') || 1;
+        const size = this.get('size')|| 1;
         let commentList = await this.model('comment').where({
             goods_id: goodsId,
             is_delete: 0
-        }).select();
-        for (const item of commentList) {
+        }).page(page, size).countSelect();;
+        for (const item of commentList.data) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
         }
-        if (commentList.length > 0) {
-            for (const item of commentList) {
+        if (commentList.data.length > 0) {
+            for (const item of commentList.data) {
                 item.list = await this.model('goods_comment_img').where({
                     cid: item.id,
                     is_delete: 0
