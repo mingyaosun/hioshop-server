@@ -40,7 +40,7 @@ module.exports = class extends Base {
         let commentList = await this.model('comment').where({
             goods_id: goodsId,
             is_delete: 0
-        }).page(page, size).countSelect();;
+        }).page(page, size).order('time desc').countSelect();
         for (const item of commentList.data) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
         }
