@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const secret = 'SLDLKKDS323ssdd@#@@gf';
+const rp = require('request-promise');
 module.exports = class extends think.Service {
     /**
      * 根据header中的X-Nideshop-Token值获取用户id
@@ -48,5 +49,22 @@ module.exports = class extends think.Service {
             return false;
         }
         return true;
+    }
+    async deleteimg(key) {
+        const domain = think.config('qiniu.domain');
+        const fileName = key.replace(domain,'');
+        const options = {
+            method: 'POST',
+            url: domain+'delete.php',
+            form: {
+                token: think.config('qiniu.token'),
+                key: fileName,
+            }
+        };
+        let sessionData = await rp(options);
+        sessionData = JSON.parse(sessionData);
+        let result = sessionData.result;
+        console.log(result);
+        return result;
     }
 };

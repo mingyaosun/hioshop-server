@@ -36,7 +36,7 @@ module.exports = class extends Base {
         let specificationList = await model.getSpecificationList(goodsId);
         //评论查分页
         const page = this.get('page') || 1;
-        const size = this.get('size')|| 1;
+        const size = this.get('size') || 1;
         let commentList = await this.model('comment').where({
             goods_id: goodsId,
             is_delete: 0
@@ -128,5 +128,69 @@ module.exports = class extends Base {
         return this.success({
             goodsCount: goodsCount
         });
+    }
+
+    /**
+     * 添加评论
+     * @returns {Promise<void>}
+     */
+    async addCommnetsAction() {
+        //评论人id
+        const publishId = this.post('publishId');
+        //被评论人id
+        const recipientId = this.post('recipientId');
+        //这条评论的父评论id
+        const parentId = this.post('parentId');
+        //当前评论的id
+        const commentId = this.post('cardId');
+    }
+    /**
+     * 删除评论
+     * @returns {Promise<*>}
+     */
+    async deleteCommnetsAction() {
+        const publishId = this.post('publishId');
+        const commentId = this.post('cardId');
+        //评论表
+        await this.model('comment').where({
+            id: commentId,
+            publish_id:publishId
+        }).limit(1).update({
+            is_delete: 1
+        });
+        //评论图片表
+        const commentImgs = await this.model('goods_comment_img').where({
+            cid: commentId,
+            is_delete: 0
+        }).select();
+        if (commentImgs.length > 0) {
+            for (const imgItem of commentImgs) {
+                //删除表单数据
+                await this.model('goods_comment_img').where({
+                    cid: imgItem.cid
+                }).update({
+                    is_delete: 1
+                });
+                //删除服务器上的图片
+                await this.service('token').deleteimg(imgItem.url);
+            }
+        }
+        return this.success('评论删除成功');
+    }
+
+    /**
+     * 单独删掉评论照片
+     * @returns {Promise<*>}
+     */
+    async deletecomimgFileAction() {
+        const id = this.post('id');
+        const url = this.post('url');
+        await this.model('goods_comment_img').where({
+            id: id
+        }).limit(1).update({
+            is_delete: 1
+        });
+        await this.service('token').deleteimg(url);
+        return this.success('文件删除成功');
     }
 };

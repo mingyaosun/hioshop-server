@@ -508,8 +508,10 @@ module.exports = class extends Base {
     async storeAction() {
         const values = this.post('info');
         const specData = this.post('specData');
-const commentData = this.post('commentData');
+        const commentData = this.post('commentData');
         const specValue = this.post('specValue');
+        //首次上传的图片
+        const commentImgFirst = this.post('commentImgFirst');
         const cateId = this.post('cateId');
         const model = this.model('goods');
         let picUrl = values.list_pic_url;
@@ -540,21 +542,41 @@ const commentData = this.post('commentData');
             }).update({
                 is_delete: 1
             });
- await this.model('comment').where({
-                goods_id: id
-            }).update({
-                is_delete: 1
-            });
 
             for (const item of commentData) {
+                //TODO
+                //先删除本商品当前评论，然后再重新插入新的评论
+                // await this.model('comment').where({
+                //     publish_id: item.publish_id ? item.publish_id : null,
+                //     recipient_id: item.recipient_id ? item.recipient_id : null,
+                //     goods_id: id
+                // }).update({
+                //     is_delete: 1
+                // });
                 item.time = parseInt(new Date(item.time).getTime() / 1000);
                 if (item.id > 0) {
                     await this.model('comment').where({
                         id: item.id
                     }).update(item);
-                }else{
-                    item.goods_id=id;
-                    await this.model('comment').add(item);
+                } else {
+                    item.goods_id = id;
+                    let cid = await this.model('comment').add(item);
+                    //下面是新加的
+                    let remoteImgArr = commentImgFirst;
+                    let imgUrl = '';
+                    for (const imgItem of remoteImgArr) {
+                        let arr = imgItem.split('$index$');
+                        if(arr[1] != imgUrl){
+                            let imgInfo = {
+                                goods_id: id,
+                                url: arr[1],
+                                cid:cid
+                            }
+                            //插入评论图片
+                            await this.model('goods_comment_img').add(imgInfo);
+                            imgUrl = arr[1];
+                        }
+                    }
                 }
             }
             for (const item of specData) {
@@ -607,9 +629,25 @@ const commentData = this.post('commentData');
                 item.is_on_sale = 1;
                 await this.model('product').add(item);
             }
-for (const item of commentData) {
+            for (const item of commentData) {
                 item.time = parseInt(new Date(item.time).getTime() / 1000);
-                await this.model('comment').add(item);
+                item.goods_id = goods_id;
+                let cid = await this.model('comment').add(item);
+                let remoteImgArr = commentImgFirst;
+                let imgUrl = '';
+                for (const imgItem of remoteImgArr) {
+                    let arr = imgItem.split('$index$');
+                    if(arr[1] != imgUrl){
+                        let imgInfo = {
+                            goods_id: id,
+                            url: arr[1],
+                            cid:cid
+                        }
+                        //插入评论图片
+                        await this.model('goods_comment_img').add(imgInfo);
+                        imgUrl = arr[1];
+                    }
+                }
             }
         }
         let pro = await this.model('product').where({
@@ -820,19 +858,6 @@ for (const item of commentData) {
         return this.success();
     }
 
-async comimgAction() {
-        const url = this.post('url');
-        const id = this.post('goods_id');
-        const cid = this.post('id');
-        console.log(cid);
-        let info = {
-            goods_id: id,
-            url: url,
-            cid:cid
-        }
-        await this.model('goods_comment_img').add(info);
-        return this.success();
-    }
     async getGalleryListAction() {
         const goodsId = this.post('goodsId');
         const data = await this.model('goods_gallery').where({
@@ -852,38 +877,39 @@ async comimgAction() {
         }
         return this.success(info);
     }
+
     async getcomimgListAction() {
         const goodsId = this.post('goodsId');
         const id = this.post('id');
-        if(id==0){
-        const data = await this.model('goods_comment_img').where({
-            goods_id: goodsId,
-            is_delete:0,
-        }).select();
-        let galleryData = [];
-        for (const item of data) {
-            let pdata = {
-                id: item.id,
-                url: item.img_url,
-                cid:item.cid
+        if (id == 0) {
+            const data = await this.model('goods_comment_img').where({
+                goods_id: goodsId,
+                is_delete: 0,
+            }).select();
+            let galleryData = [];
+            for (const item of data) {
+                let pdata = {
+                    id: item.id,
+                    url: item.url,
+                    cid: item.cid
+                }
+                galleryData.push(pdata);
             }
-            galleryData.push(pdata);
-        }
-        let info = {
-            galleryData: galleryData,
-        }
-        return this.success(info);
+            let info = {
+                galleryData: galleryData,
+            }
+            return this.success(info);
         }
         const data = await this.model('goods_comment_img').where({
             goods_id: goodsId,
-            is_delete:0,
-            cid:id
+            is_delete: 0,
+            cid: id
         }).select();
         let galleryData = [];
         for (const item of data) {
             let pdata = {
                 id: item.id,
-                url: item.img_url
+                url: item.url
             }
             galleryData.push(pdata);
         }
@@ -892,6 +918,7 @@ async comimgAction() {
         }
         return this.success(info);
     }
+
     async deleteGalleryFileAction() {
         const url = this.post('url');
         const id = this.post('id');
@@ -903,17 +930,7 @@ async comimgAction() {
         await this.service('token').deleteimg(url);
         return this.success('文件删除成功');
     }
-    async deletecomimgFileAction() {
-        const id = this.post('id');
-        const url = this.post('url');
-        await this.model('goods_comment_img').where({
-            id: id
-        }).limit(1).update({
-            is_delete: 1
-        });
-        await this.service('token').deleteimg(url);
-        return this.success('文件删除成功');
-    }
+
     async galleryEditAction() {
         if (!this.isPost) {
             return false;
@@ -953,6 +970,7 @@ async comimgAction() {
         const id = this.post('id');
         let goods_temp = await this.model('goods').where({id: id}).find();
         let goods_gallery_temp = await this.model('goods_gallery').where({goods_id: id}).select();
+        let goods_comment = await this.model('comment').where({goods_id: id}).select();
         await this.model('goods').where({
             id: id
         }).limit(1).update({
@@ -979,14 +997,28 @@ async comimgAction() {
             await this.service('token').deleteimg(goods_temp.list_pic_url);
         }
         //删除商品轮播图表图片
-        if (goods_gallery_temp.length > 0){
-            for (var index in goods_gallery_temp){
-                if (goods_gallery_temp[index].img_url){
+        if (goods_gallery_temp.length > 0) {
+            for (var index in goods_gallery_temp) {
+                if (goods_gallery_temp[index].img_url) {
                     await this.service('token').deleteimg(goods_gallery_temp[index].img_url);
                 }
             }
         }
-            return this.success();
+        //删除商品全部评论以及评论的照片
+        if (goods_comment.length > 0) {
+            await this.model('comment').where({goods_id: id}).update({is_delete: 1});
+            for (var index in goods_comment) {
+                if (goods_comment[index].id) {
+                    let comment_img = await this.model('goods_comment_img').where({cid: goods_comment[index].id}).select();
+                    await this.model('goods_comment_img').where({cid: goods_comment[index].id}).update({is_delete: 1});
+                    for (const imgItem in comment_img) {
+                        await this.service('token').deleteimg(comment_img[imgItem].url);
+                    }
+
+                }
+            }
+        }
+        return this.success();
     }
 
     async uploadHttpsImageAction() {
@@ -1038,5 +1070,59 @@ async comimgAction() {
         console.log(httpsUrl);
         let lastUrl = domain + httpsUrl;
         return this.success(lastUrl);
+    }
+
+    /**
+     * 保存评论照片
+     * @returns {Promise<*>}
+     */
+    async comimgAction() {
+        const url = this.post('url');
+        const id = this.post('goods_id');
+        const cid = this.post('id');
+        const publishId = this.post('publishId');
+        const recipientId = this.post('recipientId');
+        console.log('cid==================== ' + cid);
+        let info = {
+            goods_id: id,
+            url: url,
+            cid: cid,
+            publish_id:publishId,
+            recipient_id:recipientId
+        }
+        await this.model('goods_comment_img').add(info);
+        return this.success();
+    }
+
+    /**
+     * 删除评论照片,图片上的删除事件
+     * @returns {Promise<*>}
+     */
+    async deletecomimgFileAction() {
+        const id = this.post('id');
+        const url = this.post('url');
+        if (id > 0) {
+            await this.model('goods_comment_img').where({
+                id: id
+            }).limit(1).update({
+                is_delete: 1
+            });
+        }
+        await this.service('token').deleteimg(url);
+        return this.success('文件删除成功');
+    }
+
+    /**
+     * 单条删除评论
+     * @returns {Promise<*>}
+     */
+    async deleteCommentAction() {
+        const id = this.post('id');
+        await this.model('comment').where({
+            id: id
+        }).limit(1).update({
+            is_delete: 1
+        });
+        return this.success('评论删除成功');
     }
 };
