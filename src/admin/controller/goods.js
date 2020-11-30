@@ -510,8 +510,6 @@ module.exports = class extends Base {
         const specData = this.post('specData');
         const commentData = this.post('commentData');
         const specValue = this.post('specValue');
-        //首次上传的图片
-        const commentImgFirst = this.post('commentImgFirst');
         const cateId = this.post('cateId');
         const model = this.model('goods');
         let picUrl = values.list_pic_url;
@@ -542,39 +540,49 @@ module.exports = class extends Base {
             }).update({
                 is_delete: 1
             });
-
+            //添加评论
             for (const item of commentData) {
                 //TODO
-                //先删除本商品当前评论，然后再重新插入新的评论
-                // await this.model('comment').where({
-                //     publish_id: item.publish_id ? item.publish_id : null,
-                //     recipient_id: item.recipient_id ? item.recipient_id : null,
-                //     goods_id: id
-                // }).update({
-                //     is_delete: 1
-                // });
                 item.time = parseInt(new Date(item.time).getTime() / 1000);
+                let publish_id = item.publish_id ? item.publish_id : 0;
+                let recipient_id = item.recipient_id ? item.recipient_id : 0;
                 if (item.id > 0) {
                     await this.model('comment').where({
                         id: item.id
                     }).update(item);
+                    if (!!item.list) {
+                        for (const img of item.list) {
+                            //替换图片时候判断
+                            let url = (img.url.indexOf('blob') > -1) ? think.config('qiniu.domain') + img.response.key : img.url;
+                            let imgInfo = {
+                                goods_id: id,
+                                url: url,
+                                cid: item.id,
+                                publish_id: publish_id,
+                                recipient_id: recipient_id,
+                            }
+                            await this.model('goods_comment_img').where({
+                                cid:item.id,
+                                publish_id: publish_id,
+                                recipient_id: recipient_id,
+                                goods_id: id,
+                            }).delete();
+                            await this.model('goods_comment_img').where(imgInfo).add(imgInfo);
+                        }
+                    }
                 } else {
                     item.goods_id = id;
                     let cid = await this.model('comment').add(item);
-                    //下面是新加的
-                    let remoteImgArr = commentImgFirst;
-                    let imgUrl = '';
-                    for (const imgItem of remoteImgArr) {
-                        let arr = imgItem.split('$index$');
-                        if(arr[1] != imgUrl){
+                    if (!!item.list) {
+                        for (const img of item.list) {
                             let imgInfo = {
                                 goods_id: id,
-                                url: arr[1],
-                                cid:cid
+                                url: think.config('qiniu.domain') + img.response.key,
+                                cid: cid,
+                                publish_id: publish_id,
+                                recipient_id: recipient_id,
                             }
-                            //插入评论图片
                             await this.model('goods_comment_img').add(imgInfo);
-                            imgUrl = arr[1];
                         }
                     }
                 }
@@ -633,19 +641,17 @@ module.exports = class extends Base {
                 item.time = parseInt(new Date(item.time).getTime() / 1000);
                 item.goods_id = goods_id;
                 let cid = await this.model('comment').add(item);
-                let remoteImgArr = commentImgFirst;
-                let imgUrl = '';
-                for (const imgItem of remoteImgArr) {
-                    let arr = imgItem.split('$index$');
-                    if(arr[1] != imgUrl){
+                if (!!item.list) {
+                    for (const img of item.list) {
                         let imgInfo = {
-                            goods_id: id,
-                            url: arr[1],
-                            cid:cid
+                            goods_id: goods_id,
+                            url: think.config('qiniu.domain') + img.response.key,
+                            cid: cid,
+                            publish_id: item.publish_id ? item.publish_id : 0,
+                            recipient_id: item.recipient_id ? item.recipient_id : 0,
                         }
-                        //插入评论图片
                         await this.model('goods_comment_img').add(imgInfo);
-                        imgUrl = arr[1];
+
                     }
                 }
             }
@@ -843,7 +849,6 @@ module.exports = class extends Base {
             goods_id: id,
             is_delete: 0
         }).order('sort_order ASC').select();
-        // console.log(data);
         return this.success(data);
     }
 
@@ -1082,13 +1087,12 @@ module.exports = class extends Base {
         const cid = this.post('id');
         const publishId = this.post('publishId');
         const recipientId = this.post('recipientId');
-        console.log('cid==================== ' + cid);
         let info = {
             goods_id: id,
             url: url,
             cid: cid,
-            publish_id:publishId,
-            recipient_id:recipientId
+            publish_id: publishId,
+            recipient_id: recipientId
         }
         await this.model('goods_comment_img').add(info);
         return this.success();
