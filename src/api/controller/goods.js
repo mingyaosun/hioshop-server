@@ -134,16 +134,53 @@ module.exports = class extends Base {
      * 添加评论
      * @returns {Promise<void>}
      */
-    async addCommnetsAction() {
+    async addCommentsAction() {
+        //昵称
+        const niname = this.post('niname') || '';
+        //头像
+        const avatar = this.post('avatar') || '';
+        //当前评论的商品id
+        const goodsId = this.post('cardId') || 0;
         //评论人id
-        const publishId = this.post('publishId');
+        const publishId = this.post('publishId') || 0;
         //被评论人id
-        const recipientId = this.post('recipientId');
+        const recipientId = this.post('recipientId') || 0;
+        //被评论的评论的id
+        const comId = this.post('comId') || 0;
         //这条评论的父评论id
-        const parentId = this.post('parentId');
-        //当前评论的id
-        const commentId = this.post('cardId');
+        let parentId = this.post('parentId') || 0;
+        //评论所属图片的链接
+        const comImgList = this.post('comImgList') || [];
+        //评论内容
+        const comContext = this.post('comContext') || '';
+        console.log('comImgList============== ', comImgList);
+        if (comId > 0){
+            //说明不是新增的评论，是被评论的评论
+            parentId = comId;
+        }
+        //返回入库后的记录id
+        let comment_id = await this.model('comment').add({
+            goods_id: goodsId,
+            parent_id: parentId,
+            body: comContext,
+            publish_id: publishId,
+            recipient_id: recipientId,
+            time: parseInt(new Date().getTime() / 1000),
+            niname: niname,
+            avatar: avatar
+        });
+        for (const comImgUrl of comImgList) {
+            await this.model('goods_comment_img').add({
+                cid: comment_id,
+                goods_id: goodsId,
+                publish_id: publishId,
+                recipient_id: recipientId,
+                url: comImgUrl
+            })
+        }
+        return this.success('保存评论成功');
     }
+
     /**
      * 删除评论
      * @returns {Promise<*>}
@@ -154,7 +191,7 @@ module.exports = class extends Base {
         //评论表
         await this.model('comment').where({
             id: commentId,
-            publish_id:publishId
+            publish_id: publishId
         }).limit(1).update({
             is_delete: 1
         });
