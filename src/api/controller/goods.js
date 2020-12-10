@@ -38,9 +38,17 @@ module.exports = class extends Base {
         const page = this.get('page') || 1;
         const size = this.get('size') || 1;
         let commentList = await this.model('comment').where({
+            //父id为0，该商品的第一级评论
+            parent_id: '0',
             goods_id: goodsId,
             is_delete: 0
         }).page(page, size).order('time desc').countSelect();
+        commentList.otherCount = await this.model('comment').where({
+            //父id为0，该商品的第一级评论
+            parent_id: ['!=', '0'],
+            goods_id: goodsId,
+            is_delete: 0
+        }).page(page, size).order('time desc').count('parent_id');
         for (const item of commentList.data) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
         }
@@ -50,6 +58,11 @@ module.exports = class extends Base {
                     cid: item.id,
                     is_delete: 0
                 }).select();
+                item.childrenCount = await this.model('comment').where({
+                    parent_id: ['like', `%${item.id}%`],
+                    goods_id: goodsId,
+                    is_delete: 0
+                }).count('id');
             }
         }
         info.goods_number = goodsNumber;
@@ -148,15 +161,16 @@ module.exports = class extends Base {
         //被评论的评论的id
         const comId = this.post('comId') || 0;
         //这条评论的父评论id
-        let parentId = this.post('parentId') || 0;
+        let parentId = this.post('parentId') || '0';
         //评论所属图片的链接
         const comImgList = this.post('comImgList') || [];
         //评论内容
         const comContext = this.post('comContext') || '';
         console.log('comImgList============== ', comImgList);
-        if (comId > 0){
+        if (comId != 0) {
             //说明不是新增的评论，是被评论的评论
-            parentId = comId;
+            //父id拼接0
+            parentId = '0,' + comId;
         }
         //返回入库后的记录id
         let comment_id = await this.model('comment').add({
@@ -229,5 +243,24 @@ module.exports = class extends Base {
         });
         await this.service('token').deleteimg(url);
         return this.success('文件删除成功');
+    }
+
+    /**
+     * 获得某条评论的子评论
+     * @returns {Promise<void>}
+     */
+    async childrenCommentsAction() {
+        const goodsId = this.get('goodsId');
+        const comId = this.get('comId');
+        let childrenCommentsList = await this.model('comment').where({
+            goods_id:goodsId,
+            parent_id:['like',`%${comId}%`]
+        }).order('time desc').select();
+        for (const item of childrenCommentsList) {
+            item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
+        }
+        return this.success({
+            childrenCommentsList:childrenCommentsList
+        });
     }
 };

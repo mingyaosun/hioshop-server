@@ -541,52 +541,53 @@ module.exports = class extends Base {
                 is_delete: 1
             });
             //添加评论
-            for (const item of commentData) {
-                //TODO
-                item.time = parseInt(new Date(item.time).getTime() / 1000);
-                let publish_id = item.publish_id ? item.publish_id : 0;
-                let recipient_id = item.recipient_id ? item.recipient_id : 0;
-                if (item.id > 0) {
-                    await this.model('comment').where({
-                        id: item.id
-                    }).update(item);
-                    if (!!item.list) {
-                        for (const img of item.list) {
-                            //替换图片时候判断
-                            let url = (img.url.indexOf('blob') > -1) ? think.config('qiniu.domain') + img.response.key : img.url;
-                            let imgInfo = {
-                                goods_id: id,
-                                url: url,
-                                cid: item.id,
-                                publish_id: publish_id,
-                                recipient_id: recipient_id,
-                            }
-                            await this.model('goods_comment_img').where({
-                                cid:item.id,
-                                publish_id: publish_id,
-                                recipient_id: recipient_id,
-                                goods_id: id,
-                            }).delete();
-                            await this.model('goods_comment_img').where(imgInfo).add(imgInfo);
-                        }
-                    }
-                } else {
-                    item.goods_id = id;
-                    let cid = await this.model('comment').add(item);
-                    if (!!item.list) {
-                        for (const img of item.list) {
-                            let imgInfo = {
-                                goods_id: id,
-                                url: think.config('qiniu.domain') + img.response.key,
-                                cid: cid,
-                                publish_id: publish_id,
-                                recipient_id: recipient_id,
-                            }
-                            await this.model('goods_comment_img').add(imgInfo);
-                        }
-                    }
-                }
-            }
+            //TODO 管理端的评论功能不完善，会造成子评论没有父评论id，存图片也有问题，后期优化
+            // for (const item of commentData) {
+            //     //TODO
+            //     item.time = parseInt(new Date(item.time).getTime() / 1000);
+            //     let publish_id = item.publish_id ? item.publish_id : 0;
+            //     let recipient_id = item.recipient_id ? item.recipient_id : 0;
+            //     if (item.id > 0) {
+            //         await this.model('comment').where({
+            //             id: item.id
+            //         }).update(item);
+            //         if (!!item.list) {
+            //             for (const img of item.list) {
+            //                 //替换图片时候判断
+            //                 let url = (img.url.indexOf('blob') > -1) ? think.config('qiniu.domain') + img.response.key : img.url;
+            //                 let imgInfo = {
+            //                     goods_id: id,
+            //                     url: url,
+            //                     cid: item.id,
+            //                     publish_id: publish_id,
+            //                     recipient_id: recipient_id,
+            //                 }
+            //                 await this.model('goods_comment_img').where({
+            //                     cid:item.id,
+            //                     publish_id: publish_id,
+            //                     recipient_id: recipient_id,
+            //                     goods_id: id,
+            //                 }).delete();
+            //                 await this.model('goods_comment_img').where(imgInfo).add(imgInfo);
+            //             }
+            //         }
+            //     } else {
+            //         item.goods_id = id;
+            //         let cid = await this.model('comment').add(item);
+            //         if (!!item.list) {
+            //             for (const img of item.list) {
+            //                 let imgInfo = {
+            //                     goods_id: id,
+            //                     url: think.config('qiniu.domain') + img.response.key,
+            //                     cid: cid,
+            //                     publish_id: publish_id,
+            //                     recipient_id: recipient_id,
+            //                 }
+            //                 await this.model('goods_comment_img').add(imgInfo);
+            //             }
+            //         }
+            //     }
+            // }
             for (const item of specData) {
                 if (item.id > 0) {
                     await this.model('cart').where({
@@ -637,24 +638,24 @@ module.exports = class extends Base {
                 item.is_on_sale = 1;
                 await this.model('product').add(item);
             }
-            for (const item of commentData) {
-                item.time = parseInt(new Date(item.time).getTime() / 1000);
-                item.goods_id = goods_id;
-                let cid = await this.model('comment').add(item);
-                if (!!item.list) {
-                    for (const img of item.list) {
-                        let imgInfo = {
-                            goods_id: goods_id,
-                            url: think.config('qiniu.domain') + img.response.key,
-                            cid: cid,
-                            publish_id: item.publish_id ? item.publish_id : 0,
-                            recipient_id: item.recipient_id ? item.recipient_id : 0,
-                        }
-                        await this.model('goods_comment_img').add(imgInfo);
-
-                    }
-                }
-            }
+            // for (const item of commentData) {
+            //     item.time = parseInt(new Date(item.time).getTime() / 1000);
+            //     item.goods_id = goods_id;
+            //     let cid = await this.model('comment').add(item);
+            //     if (!!item.list) {
+            //         for (const img of item.list) {
+            //             let imgInfo = {
+            //                 goods_id: goods_id,
+            //                 url: think.config('qiniu.domain') + img.response.key,
+            //                 cid: cid,
+            //                 publish_id: item.publish_id ? item.publish_id : 0,
+            //                 recipient_id: item.recipient_id ? item.recipient_id : 0,
+            //             }
+            //             await this.model('goods_comment_img').add(imgInfo);
+            //
+            //         }
+            //     }
+            // }
         }
         let pro = await this.model('product').where({
             goods_id: goods_id,
