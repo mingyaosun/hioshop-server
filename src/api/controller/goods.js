@@ -170,7 +170,7 @@ module.exports = class extends Base {
         if (comId != 0) {
             //说明不是新增的评论，是被评论的评论
             //父id拼接0
-            parentId = '0,' + comId;
+            parentId = parentId+',' + comId;
         }
         //返回入库后的记录id
         let comment_id = await this.model('comment').add({
@@ -255,9 +255,11 @@ module.exports = class extends Base {
         let childrenCommentsList = await this.model('comment').where({
             goods_id:goodsId,
             parent_id:['like',`%${comId}%`]
-        }).order('time desc').select();
+        }).order('time asc').select();
         for (const item of childrenCommentsList) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
+            //评论父id的个数，如果大于等于3，说明是子评论的评论
+            item.parentIdLength = item.parent_id.split(',').length;
         }
         return this.success({
             childrenCommentsList:childrenCommentsList
