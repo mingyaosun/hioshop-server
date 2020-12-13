@@ -1,5 +1,6 @@
 const Base = require('./base.js');
 const moment = require('moment');
+const _ = require('lodash');
 module.exports = class extends Base {
     async indexAction() {
         const model = this.model('goods');
@@ -58,11 +59,21 @@ module.exports = class extends Base {
                     cid: item.id,
                     is_delete: 0
                 }).select();
+                //当前评论的子评论条数
                 item.childrenCount = await this.model('comment').where({
                     parent_id: ['like', `%${item.id}%`],
                     goods_id: goodsId,
                     is_delete: 0
                 }).count('id');
+                //当前评论的点赞数据
+                item.thumbsUpInfo = await this.model('thumbs_up_view').where({
+                    goods_id: goodsId,
+                    com_id: item.id,
+                    is_delete: 0
+                }).find();
+                if (_.includes(item.thumbsUpInfo.publish_user_id,think.userId)){
+                    item.thumbsUpInfo.isUp = true;
+                }
             }
         }
         info.goods_number = goodsNumber;
@@ -158,6 +169,8 @@ module.exports = class extends Base {
         const publishId = this.post('publishId') || 0;
         //被评论人id
         const recipientId = this.post('recipientId') || 0;
+        //被评论人昵称
+        const recipientName = this.post('recipientName') || '';
         //被评论的评论的id
         const comId = this.post('comId') || 0;
         //这条评论的父评论id
@@ -170,7 +183,7 @@ module.exports = class extends Base {
         if (comId != 0) {
             //说明不是新增的评论，是被评论的评论
             //父id拼接0
-            parentId = parentId+',' + comId;
+            parentId = parentId + ',' + comId;
         }
         //返回入库后的记录id
         let comment_id = await this.model('comment').add({
@@ -181,6 +194,7 @@ module.exports = class extends Base {
             recipient_id: recipientId,
             time: parseInt(new Date().getTime() / 1000),
             niname: niname,
+            recipient_name: recipientName,
             avatar: avatar
         });
         for (const comImgUrl of comImgList) {
@@ -192,7 +206,18 @@ module.exports = class extends Base {
                 url: comImgUrl
             })
         }
-        return this.success('保存评论成功');
+        let addedComment = await this.model('comment').where({
+            id: comment_id,
+            is_delete: 0
+        }).select();
+        for (const item of addedComment) {
+            item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
+            //评论父id的个数，如果大于等于3，说明是子评论的评论
+            item.parentIdLength = item.parent_id.split(',').length;
+        }
+        return this.success({
+            addedComment: addedComment
+        });
     }
 
     /**
@@ -253,16 +278,63 @@ module.exports = class extends Base {
         const goodsId = this.get('goodsId');
         const comId = this.get('comId');
         let childrenCommentsList = await this.model('comment').where({
-            goods_id:goodsId,
-            parent_id:['like',`%${comId}%`]
+            goods_id: goodsId,
+            parent_id: ['like', `%${comId}%`],
+            is_delete: 0
         }).order('time asc').select();
         for (const item of childrenCommentsList) {
             item.time = moment.unix(item.time).format('YYYY-MM-DD HH:mm:ss');
             //评论父id的个数，如果大于等于3，说明是子评论的评论
             item.parentIdLength = item.parent_id.split(',').length;
+            //当前评论的点赞数据
+            item.thumbsUpInfo = await this.model('thumbs_up_view').where({
+                goods_id: goodsId,
+                com_id: item.id,
+                is_delete: 0
+            }).find();
+            if (_.includes(item.thumbsUpInfo.publish_user_id,think.userId)){
+                item.thumbsUpInfo.isUp = true;
+            }
         }
         return this.success({
-            childrenCommentsList:childrenCommentsList
+            childrenCommentsList: childrenCommentsList
         });
+    }
+
+    /**
+     * 点赞功能
+     * @returns {Promise<void>}
+     */
+    async addThumbsUpAction() {
+        let type = this.post('type');//点赞类型，1为商品赞，2为评论赞
+        let comId = this.post('comId');//評論id
+        let goodsId = this.post('goodsId')//商品id
+        let userId = this.post('currentUserId');
+        let isUp = this.post('isUp');//点赞状态，true点赞，false取消点赞
+        let thumbsId = this.post('thumbsId') || '';
+        let thumbsUpInfo = await this.model('thumbs_up').where({
+            id:thumbsId
+        }).find();
+        if (think.isEmpty(thumbsUpInfo)) {
+            //如果不存在，说明是新增的点赞
+            thumbsId = await this.model('thumbs_up').add({
+                com_id: comId,
+                type: type,
+                goods_id: goodsId,
+                publish_user_id: userId,
+                time: parseInt(new Date().getTime() / 1000)
+            });
+        } else {
+            if (isUp) {
+                //取消点赞之后又点赞
+                await this.model('thumbs_up').where({id: thumbsId}).update({is_delete: 0});
+            } else {
+                //取消点赞
+                await this.model('thumbs_up').where({id: thumbsId}).update({is_delete: 1});
+            }
+        }
+        return this.success({
+            thumbsId:thumbsId
+        })
     }
 };
