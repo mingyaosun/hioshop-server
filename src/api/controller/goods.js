@@ -71,7 +71,7 @@ module.exports = class extends Base {
                     com_id: item.id,
                     is_delete: 0
                 }).find();
-                if (_.includes(item.thumbsUpInfo.publish_user_id,think.userId)){
+                if (_.includes(item.thumbsUpInfo.publish_user_id, think.userId)) {
                     item.thumbsUpInfo.isUp = true;
                 }
             }
@@ -227,13 +227,24 @@ module.exports = class extends Base {
     async deleteCommnetsAction() {
         const publishId = this.post('publishId');
         const commentId = this.post('cardId');
-        //评论表
-        await this.model('comment').where({
-            id: commentId,
-            publish_id: publishId
-        }).limit(1).update({
-            is_delete: 1
-        });
+        let commentInfo = await this.model('comment').where({publish_id:publishId,id:commentId}).find();
+        if (commentInfo.parent_id == '0'){
+            //父评论，删除当前评论和子评论
+            await this.model('comment').where({
+                publish_id: publishId,
+                _complex: {
+                    parent_id: ['like', `%${commentId}%`],
+                    id: commentId,
+                    _logic: 'or'
+                },
+            }).update({
+                is_delete: 1
+            });
+        }else {
+            //子评论，删单条
+            await this.model('comment').where({publish_id:publishId,id:commentId}).update({is_delete:1});
+        }
+
         //评论图片表
         const commentImgs = await this.model('goods_comment_img').where({
             cid: commentId,
@@ -292,7 +303,7 @@ module.exports = class extends Base {
                 com_id: item.id,
                 is_delete: 0
             }).find();
-            if (_.includes(item.thumbsUpInfo.publish_user_id,think.userId)){
+            if (_.includes(item.thumbsUpInfo.publish_user_id, think.userId)) {
                 item.thumbsUpInfo.isUp = true;
             }
         }
@@ -313,7 +324,7 @@ module.exports = class extends Base {
         let isUp = this.post('isUp');//点赞状态，true点赞，false取消点赞
         let thumbsId = this.post('thumbsId') || '';
         let thumbsUpInfo = await this.model('thumbs_up').where({
-            id:thumbsId
+            id: thumbsId
         }).find();
         if (think.isEmpty(thumbsUpInfo)) {
             //如果不存在，说明是新增的点赞
@@ -334,7 +345,7 @@ module.exports = class extends Base {
             }
         }
         return this.success({
-            thumbsId:thumbsId
+            thumbsId: thumbsId
         })
     }
 };
