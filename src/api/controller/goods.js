@@ -77,6 +77,10 @@ module.exports = class extends Base {
             }
         }
         info.goods_number = goodsNumber;
+        info.goodsThumbsInfo = await this.model('goods_thumbs_view').where({goods_id:goodsId,is_delete:0}).find();
+        if (_.includes(info.goodsThumbsInfo.publish_id, think.userId)) {
+            info.goodsThumbsInfo.isUp = true;
+        }
         return this.success({
             info: info,
             gallery: gallery,
@@ -227,8 +231,8 @@ module.exports = class extends Base {
     async deleteCommnetsAction() {
         const publishId = this.post('publishId');
         const commentId = this.post('cardId');
-        let commentInfo = await this.model('comment').where({publish_id:publishId,id:commentId}).find();
-        if (commentInfo.parent_id == '0'){
+        let commentInfo = await this.model('comment').where({publish_id: publishId, id: commentId}).find();
+        if (commentInfo.parent_id == '0') {
             //父评论，删除当前评论和子评论
             await this.model('comment').where({
                 publish_id: publishId,
@@ -240,9 +244,9 @@ module.exports = class extends Base {
             }).update({
                 is_delete: 1
             });
-        }else {
+        } else {
             //子评论，删单条
-            await this.model('comment').where({publish_id:publishId,id:commentId}).update({is_delete:1});
+            await this.model('comment').where({publish_id: publishId, id: commentId}).update({is_delete: 1});
         }
 
         //评论图片表
@@ -313,11 +317,11 @@ module.exports = class extends Base {
     }
 
     /**
-     * 点赞功能
+     * 评论点赞功能
      * @returns {Promise<void>}
      */
     async addThumbsUpAction() {
-        let type = this.post('type');//点赞类型，1为商品赞，2为评论赞
+        let type = this.post('type');//点赞类型，2为评论赞
         let comId = this.post('comId');//評論id
         let goodsId = this.post('goodsId')//商品id
         let userId = this.post('currentUserId');
@@ -346,6 +350,40 @@ module.exports = class extends Base {
         }
         return this.success({
             thumbsId: thumbsId
+        })
+    }
+
+    /**
+     * 商品点赞操作
+     * @returns {Promise<void>}
+     */
+    async goodsThumbsAction() {
+        let publishId = think.userId;
+        let goodsId = this.post('goodsId');
+        let isUp = this.post('isUp');//点赞状态，true点赞，false取消点赞
+        let goodsThumbsId = this.post('goodsThumbsId') || '';
+        let goodsThumbsInfo = await this.model('goods_thumbs').where({
+            id: publishId,
+            goods_id:goodsId
+        }).find();
+        if (think.isEmpty(goodsThumbsInfo)) {
+            //如果不存在，说明是新增的点赞
+            goodsThumbsId = await this.model('goods_thumbs').add({
+                goods_id: goodsId,
+                publish_id: publishId,
+                time: parseInt(new Date().getTime() / 1000)
+            });
+        } else {
+            if (isUp) {
+                //取消点赞之后又点赞
+                await this.model('goods_thumbs').where({id: goodsThumbsId}).update({is_delete: 0});
+            } else {
+                //取消点赞
+                await this.model('goods_thumbs').where({id: goodsThumbsId}).update({is_delete: 1});
+            }
+        }
+        return this.success({
+            goodsThumbsId: goodsThumbsId
         })
     }
 };
