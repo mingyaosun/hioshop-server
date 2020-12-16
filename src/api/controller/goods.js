@@ -77,7 +77,7 @@ module.exports = class extends Base {
             }
         }
         info.goods_number = goodsNumber;
-        info.goodsThumbsInfo = await this.model('goods_thumbs_view').where({goods_id:goodsId,is_delete:0}).find();
+        info.goodsThumbsInfo = await this.model('goods_thumbs_view').where({goods_id: goodsId, is_delete: 0}).find();
         if (_.includes(info.goodsThumbsInfo.publish_id, think.userId)) {
             info.goodsThumbsInfo.isUp = true;
         }
@@ -121,6 +121,15 @@ module.exports = class extends Base {
                 add_time: parseInt(new Date().getTime() / 1000)
             });
             //    TODO 之后要做个判断，这个词在搜索记录中的次数，如果大于某个值，则将他存入keyword
+            let keyWordCount = await this.model('search_history').where({keyword: keyword}).count('id');
+            if (keyWordCount > 15) {
+                let count = await this.model('keywords').where({keyword: keyword}).count('id');
+                if (count == 0){
+                    await this.model('keywords').add({
+                        keyword: keyword
+                    });
+                }
+            }
         }
         // 排序
         let orderMap = {};
@@ -363,8 +372,8 @@ module.exports = class extends Base {
         let isUp = this.post('isUp');//点赞状态，true点赞，false取消点赞
         let goodsThumbsId = this.post('goodsThumbsId') || '';
         let goodsThumbsInfo = await this.model('goods_thumbs').where({
-            id: publishId,
-            goods_id:goodsId
+            publish_id: publishId,
+            goods_id: goodsId
         }).find();
         if (think.isEmpty(goodsThumbsInfo)) {
             //如果不存在，说明是新增的点赞
@@ -376,10 +385,14 @@ module.exports = class extends Base {
         } else {
             if (isUp) {
                 //取消点赞之后又点赞
-                await this.model('goods_thumbs').where({id: goodsThumbsId}).update({is_delete: 0});
+                goodsThumbsId = await this.model('goods_thumbs').add({
+                    goods_id: goodsId,
+                    publish_id: publishId,
+                    time: parseInt(new Date().getTime() / 1000)
+                });
             } else {
                 //取消点赞
-                await this.model('goods_thumbs').where({id: goodsThumbsId}).update({is_delete: 1});
+                await this.model('goods_thumbs').where({id: goodsThumbsId}).delete();
             }
         }
         return this.success({
